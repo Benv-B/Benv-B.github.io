@@ -1,0 +1,570 @@
+<!doctype html>
+<!--
+  Yoma 介绍文 · 草稿 v0(2026-08-22)
+  · 正文全部在 <main> 里,按段落改文字即可,不用碰 <style> 和 <script>。
+  · class="note" 的段落是编辑注、class="slot" 的方块是待补截图的位置 —— 上线前删掉。
+  · 顶部波形是 <script> 用 canvas 画的 I²C 示意图;想换成真实采样截图,把 <figure class="trace"> 整个换成 <img> 即可。
+  · 字体从 Google Fonts 异步加载,国内打不开时自动退到系统字体,不阻塞页面。
+-->
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>板子不会撒谎</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,100..800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
+<noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,100..800&family=Noto+Sans+SC:wght@400;500;700&display=swap"></noscript>
+<style>
+  :root {
+    --ground: #F3F5F8;
+    --surface: #FFFFFF;
+    --ink: #17212B;
+    --muted: #5B6773;
+    --rule: #D7DEE5;
+    --accent-ink: #9C5F00;
+    --trace-amber: #E3A11F;
+    --trace-teal: #1E8F96;
+    --code-bg: #EBEFF3;
+    --slot-bg: #EDF0F4;
+    --mono: "Martian Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+    --sans: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", system-ui, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --ground: #0F151A;
+      --surface: #161E25;
+      --ink: #E4EAEF;
+      --muted: #94A2AE;
+      --rule: #283540;
+      --accent-ink: #F0B443;
+      --trace-amber: #F0B443;
+      --trace-teal: #3EC4C1;
+      --code-bg: #121920;
+      --slot-bg: #131A20;
+    }
+  }
+  :root[data-theme="dark"] {
+    --ground: #0F151A;
+    --surface: #161E25;
+    --ink: #E4EAEF;
+    --muted: #94A2AE;
+    --rule: #283540;
+    --accent-ink: #F0B443;
+    --trace-amber: #F0B443;
+    --trace-teal: #3EC4C1;
+    --code-bg: #121920;
+    --slot-bg: #131A20;
+  }
+
+  html { background: var(--ground); }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.85;
+    -webkit-font-smoothing: antialiased;
+  }
+  .page {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 56px 24px 96px;
+  }
+
+  /* ---------- type ---------- */
+  .eyebrow {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 112.5, "wght" 500;
+    font-size: 11.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 14px;
+  }
+  .eyebrow .tag { color: var(--accent-ink); }
+  h1 {
+    font-size: clamp(36px, 6.2vw, 54px);
+    line-height: 1.2;
+    font-weight: 700;
+    letter-spacing: 0.01em;
+    margin: 14px 0 18px;
+    text-wrap: balance;
+  }
+  .dek {
+    font-size: 19px;
+    line-height: 1.75;
+    color: var(--muted);
+    margin: 0;
+    max-width: 36em;
+  }
+  h2 {
+    font-size: 26px;
+    line-height: 1.35;
+    font-weight: 700;
+    margin: 6px 0 18px;
+    text-wrap: balance;
+  }
+  p { margin: 0 0 1.1em; }
+  strong { font-weight: 700; }
+  a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-color: var(--trace-amber);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 4px;
+  }
+  a:hover { color: var(--accent-ink); }
+  a:focus-visible, button:focus-visible {
+    outline: 2px solid var(--accent-ink);
+    outline-offset: 3px;
+  }
+  code {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 500;
+    font-size: 0.84em;
+    background: var(--code-bg);
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+  pre {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 87.5, "wght" 450;
+    font-size: 13.5px;
+    line-height: 1.65;
+    background: var(--code-bg);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 16px 18px;
+    overflow-x: auto;
+    margin: 0 0 1.2em;
+  }
+  pre code { background: none; padding: 0; font-size: inherit; font-variation-settings: inherit; }
+  .c { color: var(--muted); }
+
+  /* ---------- sections ---------- */
+  section {
+    margin-top: 60px;
+    padding-top: 28px;
+    border-top: 1px solid var(--rule);
+  }
+  section > .eyebrow { margin-bottom: 2px; }
+
+  /* ---------- hero trace ---------- */
+  figure.trace {
+    margin: 44px 0 0;
+  }
+  @media (min-width: 900px) {
+    figure.trace { margin-inline: -56px; }
+  }
+  figure.trace .frame {
+    background: var(--surface);
+    border: 1px solid var(--rule);
+    border-radius: 4px;
+    padding: 14px 10px 8px;
+  }
+  figure.trace canvas {
+    display: block;
+    width: 100%;
+    height: 172px;
+  }
+  figcaption {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 400;
+    font-size: 12px;
+    line-height: 1.7;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+
+  /* ---------- tools as a definition grid ---------- */
+  dl.tools {
+    display: grid;
+    grid-template-columns: 10.5em 1fr;
+    column-gap: 26px;
+    row-gap: 20px;
+    margin: 26px 0 30px;
+  }
+  dl.tools dt {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 600;
+    font-size: 14px;
+    color: var(--accent-ink);
+    padding-top: 5px;
+    line-height: 1.4;
+  }
+  dl.tools dt small {
+    display: block;
+    font-family: var(--sans);
+    font-weight: 500;
+    font-size: 14.5px;
+    color: var(--ink);
+    margin-top: 3px;
+  }
+  dl.tools dd { margin: 0; }
+  @media (max-width: 600px) {
+    dl.tools { display: block; }
+    dl.tools dt { padding-top: 0; margin-top: 20px; }
+    dl.tools dt small { display: inline; margin-left: 10px; }
+    dl.tools dd { margin-top: 4px; }
+  }
+
+  /* ---------- numbered walkthrough (order is the information) ---------- */
+  ol.steps {
+    list-style: none;
+    counter-reset: step;
+    padding: 0;
+    margin: 18px 0 22px;
+    display: grid;
+    gap: 12px;
+  }
+  ol.steps li {
+    counter-increment: step;
+    display: grid;
+    grid-template-columns: 2.4em 1fr;
+    gap: 10px;
+  }
+  ol.steps li::before {
+    content: counter(step, decimal-leading-zero);
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 112.5, "wght" 600;
+    font-size: 12.5px;
+    color: var(--accent-ink);
+    padding-top: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+
+  ul.plain { padding-left: 1.2em; margin: 12px 0 18px; display: grid; gap: 8px; }
+  ul.plain li::marker { color: var(--accent-ink); }
+
+  /* ---------- draft scaffolding: slots + editorial notes ---------- */
+  .slot {
+    border: 1.5px dashed var(--rule);
+    background: var(--slot-bg);
+    padding: 24px 20px;
+    margin: 22px 0;
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 450;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--muted);
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+  .slot b {
+    flex: none;
+    color: var(--accent-ink);
+    font-weight: 600;
+    font-variation-settings: "wdth" 112.5, "wght" 600;
+    letter-spacing: 0.06em;
+  }
+  .note {
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 450;
+    font-size: 12.5px;
+    line-height: 1.7;
+    color: var(--muted);
+    border-left: 2px solid var(--trace-amber);
+    padding-left: 12px;
+    margin: 14px 0 6px;
+  }
+  .note::before { content: "编辑注 · "; color: var(--accent-ink); font-weight: 600; }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 22px;
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 500;
+    font-size: 13.5px;
+    margin: 6px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+  footer {
+    margin-top: 72px;
+    padding-top: 22px;
+    border-top: 1px solid var(--rule);
+    font-family: var(--mono);
+    font-variation-settings: "wdth" 100, "wght" 450;
+    font-size: 12px;
+    color: var(--muted);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 20px;
+  }
+  @media (prefers-reduced-motion: reduce) { * { scroll-behavior: auto !important; } }
+</style>
+</head>
+<body>
+<main class="page">
+  <header>
+    <div class="eyebrow">
+      <span>Yoma</span>
+      <span class="tag">草稿 v0 · 2026-08-22 · 个人主页版</span>
+    </div>
+    <h1>板子不会撒谎</h1>
+    <p class="dek">我做了一个面向嵌入式调试的 agent,叫 Yoma。它会烧录、会抓日志、会 gdb、会看原理图和手册,改完代码自己上板验证 —— 而不是改完就说"应该可以了"。</p>
+
+    <figure class="trace">
+      <div class="frame">
+        <canvas id="trace" role="img" aria-label="I²C 总线示意波形:SCL 与 SDA 两个通道,解码注解为 START、地址 0x48 写、NACK、STOP"></canvas>
+      </div>
+      <figcaption>示意:agent 经逻辑分析仪拿到的 I²C 解码 —— 对 0x48 写,从机没有应答。这种东西模型猜不出来,只能量。</figcaption>
+    </figure>
+  </header>
+
+  <section>
+    <div class="eyebrow"><span class="tag">钩子 · 问题</span></div>
+    <h2>写代码的 agent 很多,碰得到板子的几乎没有</h2>
+    <p>用通用 coding agent 写嵌入式代码,体验是割裂的:它写得很快,但写完那一刻工作才刚开始 —— 编译、烧录、接串口、开 gdb、翻手册查寄存器。这些它一样都碰不到,所以它只能猜:猜引脚接在哪、猜寄存器哪一位、猜时序对不对。猜错了不会报错,板子只是安静地不动。</p>
+    <p>嵌入式的瓶颈从来不是写代码,是<strong>验证</strong>。一个碰不到板子的 agent,本质上是一个很贵的自动补全。</p>
+    <p class="note">这一段换成你自己被"猜"坑过的一次真实经历(哪颗片子、猜错了什么、花了多久才发现),比泛泛地说有力得多。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">定位</span></div>
+    <h2>Yoma 是什么</h2>
+    <p>一个桌面端 agent(目前发 Windows x64 安装包),面向嵌入式调试。一句话:<strong>不止是代码编辑,而是根据硬件事实全流程闭环调试。</strong>它把嵌入式工程师桌上那几样东西 —— 烧录器、串口、gdb、逻辑分析仪、原理图、数据手册 —— 做成了 agent 原生的工具,而不是让模型去"想象"它们。</p>
+    <p>开源,MIT。内核派生自 <a href="https://github.com/earendil-works/pi">pi</a>,桌面端继承自 <a href="https://github.com/anomalyco/opencode">opencode</a> —— 站在两个巨人肩膀上,我做的是嵌入式这一层。</p>
+    <div class="slot"><b>图 · 待补</b><span>桌面端主界面截图。最好是一个会话里同时出现 gdb 卡片和日志卡片的那种画面,一眼看出"它不只是在写代码"。</span></div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">差异化功能</span></div>
+    <h2>它手上有什么</h2>
+    <p>下面这些不是提示词技巧,是 agent 能直接调用的工具 —— 左边就是它在会话里用的名字:</p>
+    <dl class="tools">
+      <dt>flash<small>烧录</small></dt>
+      <dd>OpenOCD、J-Link、厂商 CLI 都行,agent 自己组命令行。烧完落账,它知道板上此刻跑的是哪一版固件。</dd>
+
+      <dt>log<small>日志采集</small></dt>
+      <dd>串口或 RTT(从 J-Link / OpenOCD 的 TCP 口读),支持长时间采集;可以"等某个关键字出现再往下走",不用人盯着。</dd>
+
+      <dt>gdb<small>调试</small></dt>
+      <dd>OpenOCD、J-Link、QEMU 后端。断点、单步、表达式求值、故障现场分析 —— 它看的是寄存器和栈,不是猜的。</dd>
+
+      <dt>la<small>逻辑分析仪</small></dt>
+      <dd>DSLogic 原生集成,不用装 DSView。采集加 150 个协议解码器(I²C / SPI / UART……),agent 直接问"总线上发生了什么",拿到的是事务级答案:哪个地址被 NACK、哪一帧缺了 STOP。</dd>
+
+      <dt>netlist<small>原理图 / 网表</small></dt>
+      <dd>读 Altium Smart PDF、Altium / OrCAD 网表、KiCad 网表,解出引脚映射和外设连接。"PA9 接的是什么"不用问你,它自己查。</dd>
+
+      <dt>datasheet<small>数据手册检索</small></dt>
+      <dd>在手册库里按芯片搜寄存器和外设说明,带引用。规矩是:寄存器级的结论必须有手册出处,没有出处就不算结论。</dd>
+
+      <dt>examples<small>例程库</small></dt>
+      <dd>从厂商已验证的例程里检索,把例程 seed 进工程当起点。永远从例程起步,不空白写驱动 —— 先跑通绿点,再改一处、验一处。</dd>
+
+      <dt>stm32config<small>STM32 配置</small></dt>
+      <dd>写一份配置文档,校验、求解时钟树之后直接生成可编译运行的驱动代码。</dd>
+    </dl>
+    <p>把这些串起来就是它的工作方式:<strong>改代码 → 编译通过 → 烧录 → 拿 log 或 gdb 的板级证据 → 才下结论。</strong>证据链断在哪一环,它就停在哪一环,不往下编。</p>
+    <p class="note"><code>la</code> 是 8 月 21 日刚合进去的,比 v0.1.0 安装包新。文章发出去前要么先发一版新安装包,要么这一条标"最新源码可用"。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">场景 · 走一遍</span></div>
+    <h2>一个问题从头到尾</h2>
+    <p>以"I²C 温度传感器读不到数据"为例,它会这么走:</p>
+    <ol class="steps">
+      <li>读网表:确认 SDA / SCL 接在哪两个脚、板上有没有上拉。</li>
+      <li>查手册:这颗片子 I²C 外设的时钟使能位、GPIO 复用号,每一条带出处。</li>
+      <li>从例程起步改代码,编译,烧录。</li>
+      <li>接逻辑分析仪抓一把总线:解码出来是对 0x48 写、从机 NACK —— 问题不在代码,在地址。</li>
+      <li>回到原理图看 ADDR 脚的接法,改地址,重烧。</li>
+      <li>串口 log 里温度值出来了 —— 到这一步它才说"修好了",并把那条 log 附在结论里。</li>
+    </ol>
+    <div class="slot"><b>图 · 待补</b><span>用一次真实运行替换上面这段:会话截图或 30 秒录屏。一个真实的 NACK 比编的故事有说服力十倍 —— 这一节是整篇文章最值钱的位置。</span></div>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">远程调试</span><span>experimental</span></div>
+    <h2>板子在工位,代码在研发机</h2>
+    <p>很多团队的现实是:写代码的人和板子不在一个地方。Yoma 为这种情况做了一个实验性的"信箱闭环":两台机器各跑一个 agent,中间只隔一个 git 仓库。</p>
+    <ul class="plain">
+      <li><strong>研发端</strong>有工程和工具链:读证据、改代码、构建,把固件当附件塞进本轮,用大白话写指令。</li>
+      <li><strong>工位端</strong>只有板子:领指令和附件,自己决定怎么上板,复现观察,把 log、采样数据和结论回填。</li>
+      <li>多轮往返直到收敛;每一轮都是一次 commit,全程可审计。</li>
+      <li>要人动手的时候(接电源、换负载)有专门的"等人"状态,agent 不空转。</li>
+      <li>两端的模型上下文都留在本机,只有指令、附件和证据过网。</li>
+    </ul>
+    <p class="note">这一块还没在真正的两台机器上跑过。措辞要克制 —— 说"在做",别说"已支持"。</p>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">取舍</span></div>
+    <h2>几句实话</h2>
+    <ul class="plain">
+      <li><strong>没有权限确认。</strong>它能烧录、能 gdb、能跑命令,不会弹窗问你 —— 所以只在你信任的本机上用。这是产品决定,不是疏忽。</li>
+      <li>目前只有 Windows x64 安装包,还没做代码签名,SmartScreen 会拦一次;Release 里有 SHA256 可以核。</li>
+      <li>烧录 / gdb 依赖你本机装好的 OpenOCD、J-Link 或厂商工具链;手册检索需要自建一个手册服务器。</li>
+      <li>模型用自己的 key:设置页里配 DeepSeek 或 Kimi 就能跑。</li>
+      <li>远程调试是实验特性。</li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">上手</span></div>
+    <h2>三分钟跑起来</h2>
+    <p>装安装包,设置页填 API key,打开一个工程就可以开始。想从源码跑:</p>
+<pre><code>git clone https://github.com/yoma-embedded/yoma-pi.git
+cd yoma-pi &amp;&amp; bun install
+bun engines/build.ts    <span class="c"># 网表解析 / STM32 工具</span>
+bun dev:desktop</code></pre>
+    <ul class="links">
+      <li><a href="https://github.com/yoma-embedded/yoma-pi/releases/latest/download/yoma-win-x64.exe">下载安装包</a></li>
+      <li><a href="https://github.com/yoma-embedded/yoma-pi/releases">所有版本与更新说明</a></li>
+      <li><a href="https://github.com/yoma-embedded/yoma-pi">源码</a></li>
+    </ul>
+  </section>
+
+  <section>
+    <div class="eyebrow"><span class="tag">结尾</span></div>
+    <h2>想听你的板子</h2>
+    <p>Yoma 现在跑得最顺的是 STM32 配 ST-Link / J-Link 这条线。你手上是什么片子、什么探针、卡在哪种问题上,欢迎开 issue 告诉我 —— 下一步做什么,我想按真实需求排。</p>
+    <p class="note">"跑得最顺的是 STM32"按你的实际情况改;结尾留一个具体的动作(开 issue / 关注 / 回复),三个渠道各不一样。</p>
+  </section>
+
+  <footer>
+    <span>Yoma · MIT</span>
+    <span>github.com/yoma-embedded/yoma-pi</span>
+    <span>草稿 v0 · 2026-08-22</span>
+  </footer>
+</main>
+
+<script>
+(function () {
+  var canvas = document.getElementById("trace");
+  if (!canvas) return;
+
+  // One I²C write to 0x48 that the slave does not acknowledge.
+  // Unit time = one bit period (10 µs at 100 kHz).
+  var T_END = 13.5;
+  var addrBits = [1, 0, 0, 1, 0, 0, 0, 0]; // 0x48 << 1 | W
+  function sclEdges() {
+    var e = [[1.5, 0]];
+    for (var i = 0; i < 9; i++) { e.push([2.5 + i, 1]); e.push([3 + i, 0]); }
+    e.push([11.5, 1]);
+    return e;
+  }
+  function sdaEdges() {
+    var e = [[1.0, 0]]; // START: SDA falls while SCL high
+    for (var i = 0; i < 8; i++) e.push([2 + i, addrBits[i]]);
+    e.push([10, 1]);  // ACK slot released -> stays high = NACK
+    e.push([11, 0]);  // prepare STOP
+    e.push([12, 1]);  // STOP: SDA rises while SCL high
+    return e;
+  }
+  var lanes = [
+    { name: "SCL", tok: "--trace-teal", edges: sclEdges() },
+    { name: "SDA", tok: "--trace-amber", edges: sdaEdges() }
+  ];
+  var notes = [
+    { from: 1.0, to: 1.6, text: "S", hot: false },
+    { from: 2.0, to: 9.0, text: "地址 0x48", hot: false },
+    { from: 9.0, to: 10.0, text: "W", hot: false },
+    { from: 10.0, to: 11.0, text: "NACK", hot: true },
+    { from: 11.6, to: 12.3, text: "P", hot: false }
+  ];
+
+  function draw() {
+    var s = getComputedStyle(document.documentElement);
+    var tok = function (n) { return s.getPropertyValue(n).trim(); };
+    var dpr = window.devicePixelRatio || 1;
+    var W = canvas.clientWidth, H = canvas.clientHeight;
+    if (!W || !H) return;
+    canvas.width = Math.round(W * dpr);
+    canvas.height = Math.round(H * dpr);
+    var g = canvas.getContext("2d");
+    g.setTransform(dpr, 0, 0, dpr, 0, 0);
+    g.clearRect(0, 0, W, H);
+
+    var padL = 54, padR = 14;
+    var x = function (t) { return padL + (t / T_END) * (W - padL - padR); };
+    var laneH = 28, gap = 18, top = 12;
+    var mono = "\"Martian Mono\", ui-monospace, Menlo, Consolas, monospace";
+    var sans = "\"Noto Sans SC\", \"PingFang SC\", \"Microsoft YaHei\", system-ui, sans-serif";
+    var ink = tok("--ink"), muted = tok("--muted"), rule = tok("--rule"), surface = tok("--surface");
+
+    // faint sampling ticks at every SCL rising edge
+    g.strokeStyle = rule; g.lineWidth = 1; g.setLineDash([2, 3]);
+    for (var i = 0; i < 9; i++) {
+      var tx = Math.round(x(2.5 + i)) + 0.5;
+      g.beginPath(); g.moveTo(tx, top); g.lineTo(tx, top + lanes.length * (laneH + gap) - gap); g.stroke();
+    }
+    g.setLineDash([]);
+
+    // lanes
+    lanes.forEach(function (lane, li) {
+      var y0 = top + li * (laneH + gap);
+      var yH = y0 + 3, yL = y0 + laneH - 3;
+      g.fillStyle = muted;
+      g.font = "500 11px " + mono;
+      g.textBaseline = "middle";
+      g.fillText(lane.name, 8, y0 + laneH / 2);
+      g.strokeStyle = tok(lane.tok);
+      g.lineWidth = 2;
+      g.lineJoin = "miter";
+      g.beginPath();
+      var lvl = 1, yy = yH;
+      g.moveTo(x(0), yy);
+      lane.edges.forEach(function (e) {
+        var ny = e[1] ? yH : yL;
+        g.lineTo(x(e[0]), yy);
+        g.lineTo(x(e[0]), ny);
+        yy = ny;
+      });
+      g.lineTo(x(T_END), yy);
+      g.stroke();
+    });
+
+    // decoded annotation row
+    var ay = top + lanes.length * (laneH + gap) - gap + 12;
+    var ah = 22;
+    g.font = "500 11px " + mono;
+    g.textAlign = "center";
+    notes.forEach(function (n) {
+      var x0 = Math.round(x(n.from)) + 0.5, x1 = Math.round(x(n.to)) - 0.5;
+      g.beginPath();
+      g.rect(x0, ay + 0.5, x1 - x0, ah);
+      if (n.hot) {
+        g.fillStyle = tok("--trace-amber"); g.fill();
+        g.fillStyle = "#17212B";
+      } else {
+        g.fillStyle = surface; g.fill();
+        g.strokeStyle = rule; g.lineWidth = 1; g.stroke();
+        g.fillStyle = ink;
+      }
+      g.font = (n.hot ? "700" : "500") + " 11px " + (/[^\x00-\x7F]/.test(n.text) ? sans : mono);
+      g.fillText(n.text, (x0 + x1) / 2, ay + ah / 2 + 1);
+    });
+
+    // time ruler
+    var ry = ay + ah + 18;
+    g.strokeStyle = rule; g.lineWidth = 1;
+    g.beginPath(); g.moveTo(x(0), ry + 0.5); g.lineTo(x(T_END), ry + 0.5); g.stroke();
+    g.fillStyle = muted; g.font = "400 10px " + mono; g.textAlign = "left";
+    [0, 5, 10].forEach(function (t) {
+      var tx = Math.round(x(t)) + 0.5;
+      g.beginPath(); g.moveTo(tx, ry - 3); g.lineTo(tx, ry + 4); g.stroke();
+      g.fillText(t === 0 ? "0" : (t * 10) + " µs", tx + 4, ry + 12);
+    });
+    g.textAlign = "right";
+    g.fillText("100 kHz · 示意", x(T_END), ry + 12);
+  }
+
+  var schedule = function () { requestAnimationFrame(draw); };
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule); else schedule();
+  if (window.ResizeObserver) new ResizeObserver(schedule).observe(canvas); else window.addEventListener("resize", schedule);
+  var mq = window.matchMedia("(prefers-color-scheme: dark)");
+  if (mq.addEventListener) mq.addEventListener("change", schedule);
+  new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+})();
+</script>
+</body>
+</html>

@@ -1,9 +1,10 @@
 <!doctype html>
 <!--
   Yoma 介绍文 · 草稿 v0(2026-08-22)
-  · 正文全部在 <main> 里,按段落改文字即可,不用碰 <style> 和 <script>。
-  · class="note" 的段落是编辑注、class="slot" 的方块是待补截图的位置 —— 上线前删掉。
-  · 顶部波形是 <script> 用 canvas 画的 I²C 示意图;想换成真实采样截图,把 <figure class="trace"> 整个换成 <img> 即可。
+  · 改文字请打开旁边的 content.md,不用碰这个文件。
+  · 预览:打开本文件后按 Cmd+Shift+P,选 "Live Preview: Show Preview";
+    再在左边打开 content.md 改字,保存后右边大约一秒内更新。
+  · 顶部波形是 <script> 用 canvas 画的 I²C 示意图。
   · 字体从 Google Fonts 异步加载,国内打不开时自动退到系统字体,不阻塞页面。
 -->
 <html lang="zh-CN">
@@ -301,144 +302,230 @@
 </style>
 </head>
 <body>
-<main class="page">
-  <header>
-    <div class="eyebrow">
-      <span>Yoma</span>
-      <span class="tag">草稿 v0 · 2026-08-22 · 个人主页版</span>
-    </div>
-    <h1>板子不会撒谎</h1>
-    <p class="dek">我做了一个面向嵌入式调试的 agent,叫 Yoma。它会烧录、会抓日志、会 gdb、会看原理图和手册,改完代码自己上板验证 —— 而不是改完就说"应该可以了"。</p>
-
-    <figure class="trace">
-      <div class="frame">
-        <canvas id="trace" role="img" aria-label="I²C 总线示意波形:SCL 与 SDA 两个通道,解码注解为 START、地址 0x48 写、NACK、STOP"></canvas>
-      </div>
-      <figcaption>示意:agent 经逻辑分析仪拿到的 I²C 解码 —— 对 0x48 写,从机没有应答。这种东西模型猜不出来,只能量。</figcaption>
-    </figure>
-  </header>
-
-  <section>
-    <div class="eyebrow"><span class="tag">钩子 · 问题</span></div>
-    <h2>写代码的 agent 很多,碰得到板子的几乎没有</h2>
-    <p>用通用 coding agent 写嵌入式代码,体验是割裂的:它写得很快,但写完那一刻工作才刚开始 —— 编译、烧录、接串口、开 gdb、翻手册查寄存器。这些它一样都碰不到,所以它只能猜:猜引脚接在哪、猜寄存器哪一位、猜时序对不对。猜错了不会报错,板子只是安静地不动。</p>
-    <p>嵌入式的瓶颈从来不是写代码,是<strong>验证</strong>。一个碰不到板子的 agent,本质上是一个很贵的自动补全。</p>
-    <p class="note">这一段换成你自己被"猜"坑过的一次真实经历(哪颗片子、猜错了什么、花了多久才发现),比泛泛地说有力得多。</p>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">定位</span></div>
-    <h2>Yoma 是什么</h2>
-    <p>一个桌面端 agent(目前发 Windows x64 安装包),面向嵌入式调试。一句话:<strong>不止是代码编辑,而是根据硬件事实全流程闭环调试。</strong>它把嵌入式工程师桌上那几样东西 —— 烧录器、串口、gdb、逻辑分析仪、原理图、数据手册 —— 做成了 agent 原生的工具,而不是让模型去"想象"它们。</p>
-    <p>开源,MIT。内核派生自 <a href="https://github.com/earendil-works/pi">pi</a>,桌面端继承自 <a href="https://github.com/anomalyco/opencode">opencode</a> —— 站在两个巨人肩膀上,我做的是嵌入式这一层。</p>
-    <div class="slot"><b>图 · 待补</b><span>桌面端主界面截图。最好是一个会话里同时出现 gdb 卡片和日志卡片的那种画面,一眼看出"它不只是在写代码"。</span></div>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">差异化功能</span></div>
-    <h2>它手上有什么</h2>
-    <p>下面这些不是提示词技巧,是 agent 能直接调用的工具 —— 左边就是它在会话里用的名字:</p>
-    <dl class="tools">
-      <dt>flash<small>烧录</small></dt>
-      <dd>OpenOCD、J-Link、厂商 CLI 都行,agent 自己组命令行。烧完落账,它知道板上此刻跑的是哪一版固件。</dd>
-
-      <dt>log<small>日志采集</small></dt>
-      <dd>串口或 RTT(从 J-Link / OpenOCD 的 TCP 口读),支持长时间采集;可以"等某个关键字出现再往下走",不用人盯着。</dd>
-
-      <dt>gdb<small>调试</small></dt>
-      <dd>OpenOCD、J-Link、QEMU 后端。断点、单步、表达式求值、故障现场分析 —— 它看的是寄存器和栈,不是猜的。</dd>
-
-      <dt>la<small>逻辑分析仪</small></dt>
-      <dd>DSLogic 原生集成,不用装 DSView。采集加 150 个协议解码器(I²C / SPI / UART……),agent 直接问"总线上发生了什么",拿到的是事务级答案:哪个地址被 NACK、哪一帧缺了 STOP。</dd>
-
-      <dt>netlist<small>原理图 / 网表</small></dt>
-      <dd>读 Altium Smart PDF、Altium / OrCAD 网表、KiCad 网表,解出引脚映射和外设连接。"PA9 接的是什么"不用问你,它自己查。</dd>
-
-      <dt>datasheet<small>数据手册检索</small></dt>
-      <dd>在手册库里按芯片搜寄存器和外设说明,带引用。规矩是:寄存器级的结论必须有手册出处,没有出处就不算结论。</dd>
-
-      <dt>examples<small>例程库</small></dt>
-      <dd>从厂商已验证的例程里检索,把例程 seed 进工程当起点。永远从例程起步,不空白写驱动 —— 先跑通绿点,再改一处、验一处。</dd>
-
-      <dt>stm32config<small>STM32 配置</small></dt>
-      <dd>写一份配置文档,校验、求解时钟树之后直接生成可编译运行的驱动代码。</dd>
-    </dl>
-    <p>把这些串起来就是它的工作方式:<strong>改代码 → 编译通过 → 烧录 → 拿 log 或 gdb 的板级证据 → 才下结论。</strong>证据链断在哪一环,它就停在哪一环,不往下编。</p>
-    <p class="note"><code>la</code> 是 8 月 21 日刚合进去的,比 v0.1.0 安装包新。文章发出去前要么先发一版新安装包,要么这一条标"最新源码可用"。</p>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">场景 · 走一遍</span></div>
-    <h2>一个问题从头到尾</h2>
-    <p>以"I²C 温度传感器读不到数据"为例,它会这么走:</p>
-    <ol class="steps">
-      <li>读网表:确认 SDA / SCL 接在哪两个脚、板上有没有上拉。</li>
-      <li>查手册:这颗片子 I²C 外设的时钟使能位、GPIO 复用号,每一条带出处。</li>
-      <li>从例程起步改代码,编译,烧录。</li>
-      <li>接逻辑分析仪抓一把总线:解码出来是对 0x48 写、从机 NACK —— 问题不在代码,在地址。</li>
-      <li>回到原理图看 ADDR 脚的接法,改地址,重烧。</li>
-      <li>串口 log 里温度值出来了 —— 到这一步它才说"修好了",并把那条 log 附在结论里。</li>
-    </ol>
-    <div class="slot"><b>图 · 待补</b><span>用一次真实运行替换上面这段:会话截图或 30 秒录屏。一个真实的 NACK 比编的故事有说服力十倍 —— 这一节是整篇文章最值钱的位置。</span></div>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">远程调试</span><span>experimental</span></div>
-    <h2>板子在工位,代码在研发机</h2>
-    <p>很多团队的现实是:写代码的人和板子不在一个地方。Yoma 为这种情况做了一个实验性的"信箱闭环":两台机器各跑一个 agent,中间只隔一个 git 仓库。</p>
-    <ul class="plain">
-      <li><strong>研发端</strong>有工程和工具链:读证据、改代码、构建,把固件当附件塞进本轮,用大白话写指令。</li>
-      <li><strong>工位端</strong>只有板子:领指令和附件,自己决定怎么上板,复现观察,把 log、采样数据和结论回填。</li>
-      <li>多轮往返直到收敛;每一轮都是一次 commit,全程可审计。</li>
-      <li>要人动手的时候(接电源、换负载)有专门的"等人"状态,agent 不空转。</li>
-      <li>两端的模型上下文都留在本机,只有指令、附件和证据过网。</li>
-    </ul>
-    <p class="note">这一块还没在真正的两台机器上跑过。措辞要克制 —— 说"在做",别说"已支持"。</p>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">取舍</span></div>
-    <h2>几句实话</h2>
-    <ul class="plain">
-      <li><strong>没有权限确认。</strong>它能烧录、能 gdb、能跑命令,不会弹窗问你 —— 所以只在你信任的本机上用。这是产品决定,不是疏忽。</li>
-      <li>目前只有 Windows x64 安装包,还没做代码签名,SmartScreen 会拦一次;Release 里有 SHA256 可以核。</li>
-      <li>烧录 / gdb 依赖你本机装好的 OpenOCD、J-Link 或厂商工具链;手册检索需要自建一个手册服务器。</li>
-      <li>模型用自己的 key:设置页里配 DeepSeek 或 Kimi 就能跑。</li>
-      <li>远程调试是实验特性。</li>
-    </ul>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">上手</span></div>
-    <h2>三分钟跑起来</h2>
-    <p>装安装包,设置页填 API key,打开一个工程就可以开始。想从源码跑:</p>
-<pre><code>git clone https://github.com/yoma-embedded/yoma-pi.git
-cd yoma-pi &amp;&amp; bun install
-bun engines/build.ts    <span class="c"># 网表解析 / STM32 工具</span>
-bun dev:desktop</code></pre>
-    <ul class="links">
-      <li><a href="https://github.com/yoma-embedded/yoma-pi/releases/latest/download/yoma-win-x64.exe">下载安装包</a></li>
-      <li><a href="https://github.com/yoma-embedded/yoma-pi/releases">所有版本与更新说明</a></li>
-      <li><a href="https://github.com/yoma-embedded/yoma-pi">源码</a></li>
-    </ul>
-  </section>
-
-  <section>
-    <div class="eyebrow"><span class="tag">结尾</span></div>
-    <h2>想听你的板子</h2>
-    <p>Yoma 现在跑得最顺的是 STM32 配 ST-Link / J-Link 这条线。你手上是什么片子、什么探针、卡在哪种问题上,欢迎开 issue 告诉我 —— 下一步做什么,我想按真实需求排。</p>
-    <p class="note">"跑得最顺的是 STM32"按你的实际情况改;结尾留一个具体的动作(开 issue / 关注 / 回复),三个渠道各不一样。</p>
-  </section>
-
-  <footer>
-    <span>Yoma · MIT</span>
-    <span>github.com/yoma-embedded/yoma-pi</span>
-    <span>草稿 v0 · 2026-08-22</span>
-  </footer>
-</main>
+<main class="page" id="app"></main>
 
 <script>
 (function () {
+  var app = document.getElementById("app");
+  var last = "";
+  var toolRe = /^\*\*([^*]+)\*\* · (.+?) — (.+)$/;
+  var toolReColon = /^\*\*([^*]+)\*\*\s*[：:]\s*(.+)$/;
+  var linkRe = /^\[[^\]]+\]\([^)]+\)$/;
+
+  function esc(s) {
+    return String(s)
+      .replace(/&/g, "&amp;")
+      .replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;")
+      .replace(/"/g, "&quot;");
+  }
+
+  function inline(s) {
+    s = esc(s);
+    s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
+    s = s.replace(/`(.+?)`/g, "<code>$1</code>");
+    s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    return s;
+  }
+
+  function blocks(src) {
+    var lines = src.replace(/\r\n/g, "\n").split("\n");
+    var out = [];
+    var i = 0;
+    while (i < lines.length) {
+      var line = lines[i];
+      if (!line.trim()) { i++; continue; }
+      if (line.slice(0, 3) === "```") {
+        var buf = [];
+        i++;
+        while (i < lines.length && lines[i].slice(0, 3) !== "```") {
+          buf.push(lines[i]);
+          i++;
+        }
+        i++;
+        out.push({ type: "pre", text: buf.join("\n") });
+        continue;
+      }
+      if (line.slice(0, 2) === "# " && line.slice(0, 3) !== "## ") {
+        out.push({ type: "h1", text: line.slice(2) });
+        i++; continue;
+      }
+      if (line.slice(0, 3) === "## ") {
+        out.push({ type: "h2", text: line.slice(3) });
+        i++; continue;
+      }
+      if (/^注[：:]/.test(line)) {
+        out.push({ type: "note", text: line.replace(/^注[：:]/, "") });
+        i++; continue;
+      }
+      if (/^图[：:]/.test(line)) {
+        out.push({ type: "slot", text: line.replace(/^图[：:]/, "") });
+        i++; continue;
+      }
+      if (/^波形[：:]/.test(line)) {
+        out.push({ type: "trace", text: line.replace(/^波形[：:]/, "") });
+        i++; continue;
+      }
+      if (/^\d+\. /.test(line)) {
+        var items = [];
+        while (i < lines.length && /^\d+\. /.test(lines[i])) {
+          items.push(lines[i].replace(/^\d+\. /, ""));
+          i++;
+        }
+        out.push({ type: "ol", items: items });
+        continue;
+      }
+      if (/^- /.test(line)) {
+        var items = [];
+        while (i < lines.length && /^- /.test(lines[i])) {
+          items.push(lines[i].replace(/^- /, ""));
+          i++;
+        }
+        out.push({ type: "ul", items: items });
+        continue;
+      }
+      out.push({ type: "p", text: line });
+      i++;
+    }
+    return out;
+  }
+
+  function renderUl(items) {
+    if (items.length && items.every(function (it) { return toolRe.test(it); })) {
+      return '<dl class="tools">' + items.map(function (it) {
+        var m = it.match(toolRe);
+        return "<dt>" + esc(m[1]) + "<small>" + inline(m[2]) + "</small></dt><dd>" + inline(m[3]) + "</dd>";
+      }).join("") + "</dl>";
+    }
+    if (items.length && items.every(function (it) { return toolReColon.test(it); })) {
+      return '<dl class="tools">' + items.map(function (it) {
+        var m = it.match(toolReColon);
+        return "<dt>" + esc(m[1]) + "</dt><dd>" + inline(m[2]) + "</dd>";
+      }).join("") + "</dl>";
+    }
+    if (items.length && items.every(function (it) { return linkRe.test(it); })) {
+      return '<ul class="links">' + items.map(function (it) {
+        return "<li>" + inline(it) + "</li>";
+      }).join("") + "</ul>";
+    }
+    return '<ul class="plain">' + items.map(function (it) {
+      return "<li>" + inline(it) + "</li>";
+    }).join("") + "</ul>";
+  }
+
+  function renderFlow(nodes, opts) {
+    opts = opts || {};
+    var html = "";
+    nodes.forEach(function (n) {
+      if (n.type === "h2") html += "<h2>" + inline(n.text) + "</h2>";
+      else if (n.type === "p") html += "<p" + (opts.dek && !opts._dekUsed ? (opts._dekUsed = true, ' class="dek"') : "") + ">" + inline(n.text) + "</p>";
+      else if (n.type === "note") html += '<p class="note">' + inline(n.text) + "</p>";
+      else if (n.type === "slot") html += '<div class="slot"><b>图 · 待补</b><span>' + inline(n.text) + "</span></div>";
+      else if (n.type === "trace") {
+        html += '<figure class="trace"><div class="frame"><canvas id="trace" role="img" aria-label="' + esc(n.text) + '"></canvas></div><figcaption>' + inline(n.text) + "</figcaption></figure>";
+      }
+      else if (n.type === "ol") {
+        html += '<ol class="steps">' + n.items.map(function (it) {
+          return "<li>" + inline(it) + "</li>";
+        }).join("") + "</ol>";
+      }
+      else if (n.type === "ul") html += renderUl(n.items);
+      else if (n.type === "pre") {
+        html += "<pre><code>" + esc(n.text).replace(/(#[^\n]*)/g, '<span class="c">$1</span>') + "</code></pre>";
+      }
+    });
+    return html;
+  }
+
+  function render(md) {
+    md = md.replace(/<!--[\s\S]*?-->/g, "").replace(/^\uFEFF/, "").trim();
+    var parts = md.split(/\n---\n/);
+    var html = "";
+
+    parts.forEach(function (part, idx) {
+      part = part.trim();
+      if (!part) return;
+      var nodes = blocks(part);
+      var hasHeading = nodes.some(function (n) { return n.type === "h1" || n.type === "h2"; });
+
+      if (!hasHeading) {
+        html += "<footer>" + part.split("\n").filter(Boolean).map(function (line) {
+          return "<span>" + esc(line.trim()) + "</span>";
+        }).join("") + "</footer>";
+        return;
+      }
+
+      if (idx === 0) {
+        var brows = [];
+        var rest = [];
+        var seenH1 = false;
+        nodes.forEach(function (n) {
+          if (!seenH1 && n.type === "p") brows.push(n.text);
+          else if (n.type === "h1") { seenH1 = true; rest.push(n); }
+          else rest.push(n);
+        });
+        html += "<header>";
+        if (brows.length) {
+          html += '<div class="eyebrow">' + brows.map(function (t, i) {
+            return "<span" + (i ? ' class="tag"' : "") + ">" + esc(t) + "</span>";
+          }).join("") + "</div>";
+        }
+        rest.forEach(function (n) {
+          if (n.type === "h1") html += "<h1>" + inline(n.text) + "</h1>";
+        });
+        html += renderFlow(rest.filter(function (n) { return n.type !== "h1"; }), { dek: true });
+        html += "</header>";
+        return;
+      }
+
+      var brows = [];
+      var rest = [];
+      var seenH2 = false;
+      nodes.forEach(function (n) {
+        if (!seenH2 && n.type === "p") brows.push(n.text);
+        else if (n.type === "h2") { seenH2 = true; rest.push(n); }
+        else rest.push(n);
+      });
+      html += "<section>";
+      if (brows.length) {
+        html += '<div class="eyebrow">' + brows.map(function (t, i) {
+          return "<span" + (i === 0 ? ' class="tag"' : "") + ">" + esc(t) + "</span>";
+        }).join("") + "</div>";
+      }
+      html += renderFlow(rest);
+      html += "</section>";
+    });
+
+    app.innerHTML = html;
+    var h1 = app.querySelector("h1");
+    if (h1) document.title = h1.textContent;
+    if (typeof window.initYomaTrace === "function") window.initYomaTrace();
+  }
+
+  function load() {
+    return fetch("content.md", { cache: "no-store" }).then(function (res) {
+      if (!res.ok) throw new Error(res.status + " " + res.statusText);
+      return res.text();
+    }).then(function (text) {
+      if (text === last) return;
+      last = text;
+      render(text);
+    }).catch(function (err) {
+      if (app.childElementCount) return;
+      app.innerHTML = '<header><h1>打不开正文</h1><p class="dek">请用 Live Preview 打开 <code>index.html</code>，正文在 <code>content.md</code>。(' + esc(err.message) + ")</p></header>";
+    });
+  }
+
+  load();
+  if (!/\.github\.io$/.test(location.hostname)) setInterval(load, 700);
+})();
+</script>
+<script>
+window.initYomaTrace = function () {
+  if (window._yomaTraceOff) {
+    window._yomaTraceOff.forEach(function (fn) { try { fn(); } catch (e) {} });
+  }
+  window._yomaTraceOff = [];
   var canvas = document.getElementById("trace");
   if (!canvas) return;
 
@@ -560,11 +647,21 @@ bun dev:desktop</code></pre>
 
   var schedule = function () { requestAnimationFrame(draw); };
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(schedule); else schedule();
-  if (window.ResizeObserver) new ResizeObserver(schedule).observe(canvas); else window.addEventListener("resize", schedule);
+  var ro = window.ResizeObserver ? new ResizeObserver(schedule) : null;
+  if (ro) { ro.observe(canvas); window._yomaTraceOff.push(function () { ro.disconnect(); }); }
+  else {
+    window.addEventListener("resize", schedule);
+    window._yomaTraceOff.push(function () { window.removeEventListener("resize", schedule); });
+  }
   var mq = window.matchMedia("(prefers-color-scheme: dark)");
-  if (mq.addEventListener) mq.addEventListener("change", schedule);
-  new MutationObserver(schedule).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
-})();
+  if (mq.addEventListener) {
+    mq.addEventListener("change", schedule);
+    window._yomaTraceOff.push(function () { mq.removeEventListener("change", schedule); });
+  }
+  var mo = new MutationObserver(schedule);
+  mo.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+  window._yomaTraceOff.push(function () { mo.disconnect(); });
+};
 </script>
 </body>
 </html>

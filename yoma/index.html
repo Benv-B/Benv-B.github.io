@@ -65,13 +65,17 @@
     color: var(--ink);
     font-family: var(--sans);
     font-size: 17px;
-    line-height: 1.85;
+    line-height: 1.75;
+    overflow-wrap: break-word;
+    word-break: normal;
+    line-break: loose;
+    text-wrap: pretty;
     -webkit-font-smoothing: antialiased;
   }
   .page {
-    max-width: 680px;
+    max-width: 880px;
     margin: 0 auto;
-    padding: 56px 24px 96px;
+    padding: 56px 32px 96px;
   }
 
   /* ---------- type ---------- */
@@ -97,10 +101,9 @@
   }
   .dek {
     font-size: 19px;
-    line-height: 1.75;
+    line-height: 1.7;
     color: var(--muted);
     margin: 0;
-    max-width: 36em;
   }
   h2 {
     font-size: 26px;
@@ -130,7 +133,9 @@
     background: var(--code-bg);
     padding: 1px 5px;
     border-radius: 3px;
+    white-space: nowrap;
   }
+  .nowrap { white-space: nowrap; }
   pre {
     font-family: var(--mono);
     font-variation-settings: "wdth" 87.5, "wght" 450;
@@ -325,6 +330,7 @@
     s = s.replace(/\*\*(.+?)\*\*/g, "<strong>$1</strong>");
     s = s.replace(/`(.+?)`/g, "<code>$1</code>");
     s = s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>');
+    s = s.replace(/[\u4e00-\u9fff]{0,4}（[^（）]*<code>[^<]*<\/code>[^（）]*）/g, '<span class="nowrap">$&</span>');
     return s;
   }
 
@@ -426,7 +432,7 @@
       }
       else if (n.type === "ol") {
         html += '<ol class="steps">' + n.items.map(function (it) {
-          return "<li>" + inline(it) + "</li>";
+          return "<li><div>" + inline(it) + "</div></li>";
         }).join("") + "</ol>";
       }
       else if (n.type === "ul") html += renderUl(n.items);

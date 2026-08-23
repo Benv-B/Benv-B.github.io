@@ -1,6 +1,6 @@
 <!doctype html>
 <!--
-  Yoma 介绍文 · 草稿 v0(2026-08-22)
+  Yoma 介绍文
   · 改文字请打开旁边的 content.md,不用碰这个文件。
   · 预览:打开本文件后按 Cmd+Shift+P,选 "Live Preview: Show Preview";
     再在左边打开 content.md 改字,保存后右边大约一秒内更新。
@@ -11,7 +11,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>板子不会撒谎</title>
+<title>Yoma - 面向嵌入式工程师的专门 Agent</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" media="print" onload="this.media='all'" href="https://fonts.googleapis.com/css2?family=Martian+Mono:wdth,wght@75..112.5,100..800&family=Noto+Sans+SC:wght@400;500;700&display=swap">
@@ -92,12 +92,18 @@
   }
   .eyebrow .tag { color: var(--accent-ink); }
   h1 {
-    font-size: clamp(36px, 6.2vw, 54px);
-    line-height: 1.2;
+    font-size: clamp(22px, 2.2vw + 10px, 34px);
+    line-height: 1.25;
     font-weight: 700;
     letter-spacing: 0.01em;
     margin: 14px 0 18px;
-    text-wrap: balance;
+    white-space: nowrap;
+  }
+  @media (max-width: 640px) {
+    h1 {
+      white-space: normal;
+      font-size: 26px;
+    }
   }
   .dek {
     font-size: 19px;
